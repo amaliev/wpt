@@ -27,8 +27,13 @@ pressure_test(async (t, mockPressureService) => {
     // cause the actual timer used by mockPressureService to deliver readings
     // to be a bit slower or faster than requested.
     while (observerChanges.length < minChangesThreshold) {
-      mockPressureService.setPressureUpdate(
-          'cpu', readings[i++ % readings.length]);
+      // setTimeout() gives time to the event loop to process
+      // the observer callback.
+      setTimeout(
+          mockPressureService.setPressureUpdate(
+              'cpu', readings[i++ % readings.length]),
+          1000 / sampleRateInHz);
+      await new Promise((resolve) => setTimeout(resolve, 0));
       await t.step_wait(
           () => mockPressureService.updatesDelivered() >= i,
           `At least ${i} readings have been delivered`);
